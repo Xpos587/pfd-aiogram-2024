@@ -1,0 +1,26 @@
+name: default
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - aiogram
+      - aiogram_i18n
+      - alembic
+      - asyncpg
+      - redis
+      - sqlalchemy
+      - msgspec
+      - pydantic
+      - pydantic_settings
+      - fluent_runtime
+      - types-pyyaml
+      - tzdata
+      - ipykernel
+      - ruff-lsp
+      - ruff
+      - black
+      - libcst

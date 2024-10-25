@@ -1,0 +1,61 @@
+[tool.black]
+line-length = 80
+exclude = "\\.?venv|\\.?tests"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 80
+ignore = ["N817", "N813"]
+select = [
+    "C",
+    "DTZ",
+    "E",
+    "F",
+    "I",
+    "ICN",
+    "ISC",
+    "N",
+    "PLC",
+    "PLE",
+    "Q",
+    "S",
+    "T",
+    "W",
+    "YTT",
+    "RET",
+    "SIM",
+    "ASYNC",
+]
+exclude = [
+    ".git",
+    ".venv",
+    ".idea",
+    ".tests",
+    ".cache",
+    "build",
+    "dist",
+    "scripts",
+]
+
+[tool.mypy]
+plugins = ["sqlalchemy.ext.mypy.plugin", "pydantic.mypy"]
+exclude = [
+    ".git",
+    ".venv",
+    ".idea",
+    ".tests",
+    ".cache",
+    "build",
+    "dist",
+    "scripts",
+]
+
+[[tool.mypy.overrides]]
+module = ["redis.*"]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["bot.handlers.*"]
+strict_optional = false
+warn_return_any = false
