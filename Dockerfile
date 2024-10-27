@@ -1,25 +1,46 @@
 FROM python:3.12-slim
+
+# Установка переменных окружения
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 ENV PATH "/app/scripts:${PATH}"
+ENV PYTHONUNBUFFERED 1
+
 WORKDIR /app
 
-# Install poetry
-RUN set +x \
- && apt update \
- && apt upgrade -y \
- && apt install -y --no-install-recommends curl gcc build-essential \
- && curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python -\
- && ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry \
- && apt-get purge --auto-remove -y curl \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* \
- && poetry config virtualenvs.create false
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-COPY pyproject.toml poetry.lock /app/
-RUN poetry install --no-interaction --no-ansi --only main --no-root
+# Копирование requirements.txt и установка зависимостей
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Prepare entrypoint
-ADD . /app/
-RUN chmod +x scripts/*
-ENTRYPOINT ["docker-entrypoint.sh"]
+# Копирование файлов проекта
+COPY . .
+
+# Создание необходимых директорий
+RUN mkdir -p \
+    /data/knowledge \
+    /chroma/chroma \
+    /var/lib/postgresql/data \
+    /data/redis
+
+# Установка прав на выполнение скриптов
+RUN if [ -d "scripts" ]; then chmod +x scripts/*; fi
+
+# Применение миграций при запуске
+RUN echo '#!/bin/sh' > /entrypoint.sh \
+    && echo 'alembic upgrade head' >> /entrypoint.sh \
+    && echo 'python -m bot' >> /entrypoint.sh \
+    && chmod +x /entrypoint.sh
+
+# Открытие портов
+EXPOSE 8080
+
+# Запуск бота
+ENTRYPOINT ["/entrypoint.sh"]
+
