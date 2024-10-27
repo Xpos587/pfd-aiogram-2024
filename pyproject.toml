@@ -1,3 +1,6 @@
+[tool.pyright]
+exclude = ["."]
+
 [tool.black]
 line-length = 80
 exclude = "\\.?venv|\\.?tests"

@@ -24,3 +24,7 @@ dependencies:
       - ruff
       - black
       - libcst
+      - openai
+      - chromadb
+      - sentence-transformers
+      - orjson
