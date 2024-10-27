@@ -322,9 +322,10 @@ async def ask_question_with_memory(question: str) -> Answer:
     try:
         system_prompt = Prompts.get_system_prompt()
 
-        relevant_docs, consolidated_info = (
-            await get_relevant_documents_with_memory(question)
-        )
+        (
+            relevant_docs,
+            consolidated_info,
+        ) = await get_relevant_documents_with_memory(question)
 
         response = await vllm_client.chat.completions.create(
             model=QWEN_MODEL,

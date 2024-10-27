@@ -21,4 +21,7 @@ sentence-transformers>=2.2.0
 orjson>=3.9.0
 python-dotenv>=1.0.0
 uvloop>=0.19.0
+aiofiles>=23.2.1
+pymupdf4llm>=0.1.2
+watchdog>=3.0.0
 

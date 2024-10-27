@@ -3,30 +3,6 @@ networks:
     driver: bridge
 
 services:
-  chroma:
-    image: ghcr.io/chroma-core/chroma:0.5.11
-    container_name: chroma
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      ANONYMIZED_TELEMETRY: "FALSE"
-      IS_PERSISTENT: "TRUE"
-      PERSIST_DIRECTORY: ${CHROMA_DATA}
-    ports:
-      - "${CHROMA_PORT:-8000}:8000"
-    expose:
-      - "8000"
-    volumes:
-      - ./chroma:${CHROMA_DATA}
-    command: "--workers 1 --host 0.0.0.0 --port 8000 --proxy-headers --log-config chromadb/log_config.yml --timeout-keep-alive 30"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - net
-
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -60,9 +36,41 @@ services:
     networks:
       - net
 
+  chroma:
+    image: ghcr.io/chroma-core/chroma:0.5.11
+    container_name: chroma
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ANONYMIZED_TELEMETRY: "FALSE"
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: ${CHROMA_DATA}
+    ports:
+      - "${CHROMA_PORT:-8000}:8000"
+    volumes:
+      - ./chroma:${CHROMA_DATA}
+    networks:
+      - net
+
+  document-processor:
+    container_name: document-processor
+    build:
+      context: .
+      dockerfile: Dockerfile.processor
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - chroma
+    volumes:
+      - ./data:${KNOWLEDGE_DATA}
+    networks:
+      - net
+
   bot:
     container_name: silavik
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
     restart: unless-stopped
     env_file: .env
     depends_on:
@@ -71,9 +79,5 @@ services:
       - chroma
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
-    expose:
-      - ${SERVER_PORT}
-    volumes:
-      - ./data:${KNOWLEDGE_DATA}
     networks:
       - net
