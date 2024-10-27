@@ -1,4 +1,5 @@
 import asyncio
+import os
 import orjson
 import numpy as np
 from openai import AsyncOpenAI
@@ -6,24 +7,37 @@ from chromadb import AsyncHttpClient, Settings
 from typing import Dict, List, Literal, Optional, Any
 from pydantic import BaseModel, Field, ValidationError
 from sentence_transformers import SentenceTransformer
+from dotenv import load_dotenv
+
+# Загрузка переменных окружения из .env файла
+load_dotenv()
+
+# Конфигурационные переменные с значениями по умолчанию
+QWEN_MODEL = os.getenv("QWEN_MODEL", "Qwen/Qwen2.5-14B-Instruct-GPTQ-Int8")
+VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://65.109.137.0:60564/v1")
+VLLM_API_KEY = os.getenv("VLLM_API_KEY", "dummy_key")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "cointegrated/LaBSE-en-ru")
+CHROMA_HOST = os.getenv("CHROMA_HOST", "91.184.242.207")
+CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
+CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "documents")
+MEMORY_SIZE = int(os.getenv("MEMORY_SIZE", "1000"))
 
 # Инициализация клиента OpenAI и модели эмбеддингов
-QWEN_MODEL = "Qwen/Qwen2.5-14B-Instruct-GPTQ-Int8"
-vllm_client = AsyncOpenAI(
-    base_url="http://65.109.137.0:60564/v1", api_key="dummy_key"
-)
+vllm_client = AsyncOpenAI(base_url=VLLM_BASE_URL, api_key=VLLM_API_KEY)
 
-embedding_model = SentenceTransformer("cointegrated/LaBSE-en-ru")
+embedding_model = SentenceTransformer(EMBEDDING_MODEL)
 
 # Инициализация клиента ChromaDB
 chroma_client = asyncio.run(
     AsyncHttpClient(
-        host="91.184.242.207",
-        port=8000,
+        host=CHROMA_HOST,
+        port=CHROMA_PORT,
         settings=Settings(anonymized_telemetry=False),
     )
 )
-collection = asyncio.run(chroma_client.get_or_create_collection("documents"))
+collection = asyncio.run(
+    chroma_client.get_or_create_collection(CHROMA_COLLECTION)
+)
 
 
 # Определение класса CamelotMemory для управления памятью
@@ -83,7 +97,8 @@ class CamelotMemory:
         )
 
 
-camelot_memory = CamelotMemory()
+# Создание экземпляра CamelotMemory с размером из конфигурации
+camelot_memory = CamelotMemory(memory_size=MEMORY_SIZE)
 
 
 def create_embeddings(texts: List[str]):
@@ -307,10 +322,9 @@ async def ask_question_with_memory(question: str) -> Answer:
     try:
         system_prompt = Prompts.get_system_prompt()
 
-        (
-            relevant_docs,
-            consolidated_info,
-        ) = await get_relevant_documents_with_memory(question)
+        relevant_docs, consolidated_info = (
+            await get_relevant_documents_with_memory(question)
+        )
 
         response = await vllm_client.chat.completions.create(
             model=QWEN_MODEL,

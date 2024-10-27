@@ -47,22 +47,6 @@ async def start_command(
     )
 
 
-@router.callback_query(cbd.faq())
-async def handle_faq(
-    query: CallbackQuery, i18n: I18nContext, state: FSMContext
-) -> Any:
-    await state.clear()
-    await query.message.edit_media(
-        media=InputMediaPhoto(
-            media=image.faq,  # Убедитесь, что у вас есть соответствующее изображение
-            caption=i18n.msg.faq(),
-        ),
-        reply_markup=common_keyboard(
-            rows=[Button(i18n.btn.back(), callback_data=cbd.main)]
-        ),
-    )
-
-
 @router.callback_query(cbd.ask())
 async def handle_ask(
     query: CallbackQuery, i18n: I18nContext, state: FSMContext

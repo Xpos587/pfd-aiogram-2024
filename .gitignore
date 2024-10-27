@@ -6,7 +6,6 @@
 .env
 compose/.env
 venv/
-docker-compose.yml
 poetry.lock
 
 # Cache

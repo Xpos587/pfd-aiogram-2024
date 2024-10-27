@@ -1,0 +1,79 @@
+networks:
+  net:
+    driver: bridge
+
+services:
+  chroma:
+    image: ghcr.io/chroma-core/chroma:0.5.11
+    container_name: chroma
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ANONYMIZED_TELEMETRY: "FALSE"
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: ${CHROMA_DATA}
+    ports:
+      - "${CHROMA_PORT:-8000}:8000"
+    expose:
+      - "8000"
+    volumes:
+      - ./chroma:${CHROMA_DATA}
+    command: "--workers 1 --host 0.0.0.0 --port 8000 --proxy-headers --log-config chromadb/log_config.yml --timeout-keep-alive 30"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    expose:
+      - "${REDIS_PORT}"
+    volumes:
+      - ./redis:${REDIS_DATA}
+    networks:
+      - net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: ${POSTGRES_DATA}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    expose:
+      - "${POSTGRES_PORT}"
+    volumes:
+      - ./postgres:${POSTGRES_DATA}
+    networks:
+      - net
+
+  bot:
+    container_name: silavik
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - redis
+      - postgres
+      - chroma
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    expose:
+      - ${SERVER_PORT}
+    volumes:
+      - ./data:${KNOWLEDGE_DATA}
+    networks:
+      - net
