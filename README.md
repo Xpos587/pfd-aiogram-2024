@@ -49,7 +49,7 @@ cp .env.dist .env
 
 3. Запуск с помощью Docker Compose:
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 4. Проверка работоспособности:
