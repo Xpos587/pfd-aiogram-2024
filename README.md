@@ -168,6 +168,7 @@ MIT License
 ## Авторы
 
 - [Xpos587](https://github.com/Xpos587)
+- [Сева из МИСиСа](https://github.com/freeexotic)
 
 ## Поддержка
 
